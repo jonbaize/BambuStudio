@@ -11,6 +11,7 @@
 #include "BitmapCache.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
+#include "Tabbook.hpp"
 #include "fila_manager/wgtFilaManagerCloudClient.h"
 #include "fila_manager/wgtFilaManagerStore.h"
 #include <wx/weakref.h>
@@ -1981,11 +1982,11 @@ StatusBasePanel::StatusBasePanel(wxWindow *parent, wxWindowID id, const wxPoint 
     auto m_monitoring_sizer = create_monitoring_page();
     bSizer_left->Add(m_monitoring_sizer, 1, wxEXPAND | wxALL, 0);
 
-    auto m_panel_separotor1 = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_panel_separotor1->SetBackgroundColour(STATUS_PANEL_BG);
-    m_panel_separotor1->SetMinSize(wxSize(-1, PAGE_SPACING));
-    m_panel_separotor1->SetMaxSize(wxSize(-1, PAGE_SPACING));
-    m_monitoring_sizer->Add(m_panel_separotor1, 0, wxEXPAND, 0);
+    m_panel_separotor_task = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    m_panel_separotor_task->SetBackgroundColour(STATUS_PANEL_BG);
+    m_panel_separotor_task->SetMinSize(wxSize(-1, PAGE_SPACING));
+    m_panel_separotor_task->SetMaxSize(wxSize(-1, PAGE_SPACING));
+    m_monitoring_sizer->Add(m_panel_separotor_task, 0, wxEXPAND, 0);
 
     m_project_task_panel = new PrintingTaskPanel(this, PrintingTaskType::PRINGINT);
     m_project_task_panel->init_bitmaps();
@@ -1998,7 +1999,7 @@ StatusBasePanel::StatusBasePanel(wxWindow *parent, wxWindowID id, const wxPoint 
 
     bSizer_status_below->Add(bSizer_left, 1, wxALL | wxEXPAND, 0);
 
-    auto m_panel_separator_middle = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxTAB_TRAVERSAL);
+    m_panel_separator_middle = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxTAB_TRAVERSAL);
     m_panel_separator_middle->SetBackgroundColour(STATUS_PANEL_BG);
     m_panel_separator_middle->SetMinSize(wxSize(PAGE_SPACING, -1));
 
@@ -2097,8 +2098,32 @@ void StatusBasePanel::on_camera_fullscreen(wxMouseEvent &event)
 {
     if (m_camera_fullscreen_button)
         m_camera_fullscreen_button->reset_hover();
-    toggle_camera_fullscreen();
+    set_camera_expanded(!m_camera_expanded);
     event.Skip();
+}
+
+void StatusBasePanel::set_camera_expanded(bool expanded)
+{
+    if (m_camera_expanded == expanded) return;
+    m_camera_expanded = expanded;
+
+    // The outer separators stay visible so the gray border around the camera remains.
+    for (wxWindow *win : {static_cast<wxWindow *>(m_panel_separotor_task), static_cast<wxWindow *>(m_project_task_panel),
+                          static_cast<wxWindow *>(m_panel_separator_middle), static_cast<wxWindow *>(m_machine_ctrl_panel)})
+        if (win) win->Show(!expanded);
+
+    if (m_camera_fullscreen_button)
+        m_camera_fullscreen_button->SetToolTip(expanded ? _L("Exit Expanded Camera View") : _L("Enter Camera Full Screen"));
+
+    // Hide the Device side panel (printer selector and Status/Storage/Update/HMS tabs).
+    if (auto *tabbook = dynamic_cast<Tabbook *>(GetParent())) {
+        if (wxWindow *side = tabbook->GetBtnsListCtrl()) side->Show(!expanded);
+        tabbook->Layout();
+        tabbook->SendSizeEvent();
+    }
+
+    Layout();
+    Refresh();
 }
 
 void StatusBasePanel::init_bitmaps()
@@ -3151,7 +3176,7 @@ void StatusPanel::update_camera_state(MachineObject *obj)
 
     // fullscreen button: enable only when media is playing
     if (m_camera_fullscreen_button) {
-        bool playing = m_media_ctrl && m_media_ctrl->GetState() == wxMEDIASTATE_PLAYING;
+        bool playing = m_camera_expanded || (m_media_ctrl && m_media_ctrl->GetState() == wxMEDIASTATE_PLAYING);
         if (m_camera_fullscreen_button->IsEnabled() != playing) {
             m_camera_fullscreen_button->Enable(playing);
             m_camera_fullscreen_button->Refresh();
@@ -6161,6 +6186,7 @@ void StatusPanel::set_default()
 {
     BOOST_LOG_TRIVIAL(trace) << "status_panel: set_default";
     close_camera_fullscreen();
+    set_camera_expanded(false);
     obj                           = nullptr;
     last_subtask                  = nullptr;
     last_tray_exist_bits          = -1;

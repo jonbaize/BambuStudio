@@ -446,6 +446,7 @@ protected:
     wxBoxSizer *m_camera_media_sizer{ nullptr };
     CameraFullscreenFrame *m_camera_fullscreen_frame{ nullptr };
     wxPanel *m_camera_placeholder{ nullptr };
+    bool m_camera_expanded{ false };
 
     wxBitmap m_bitmap_camera;
     ScalableBitmap m_bitmap_sdcard_state_normal;
@@ -566,6 +567,8 @@ protected:
 
     wgtDeviceNozzleRack* m_panel_nozzle_rack{ nullptr };
 
+    wxPanel *       m_panel_separator_middle{ nullptr };
+    wxPanel *       m_panel_separotor_task{ nullptr };
     wxPanel *       m_panel_separator_right;
     wxPanel *       m_panel_separotor_bottom;
     wxGridBagSizer *m_tasklist_info_sizer{nullptr};
@@ -656,6 +659,11 @@ public:
     void toggle_camera_fullscreen();
     void close_camera_fullscreen();
     void on_camera_fullscreen(wxMouseEvent& event);
+
+    // Expanded camera view: grow the camera feed inside the main window by hiding
+    // the printing progress, control and Device side panels.
+    bool is_camera_expanded() const { return m_camera_expanded; }
+    void set_camera_expanded(bool expanded);
 
 private:
     void on_ams_rack_switch(wxCommandEvent& event);
