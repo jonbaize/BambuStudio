@@ -1,3 +1,11 @@
+> [!NOTE]
+> **This is the `ux-dev` branch of an unofficial fork**, not a Bambu Lab release. It is Bambu Studio with the changes below. [See every difference from Bambu Lab's version.](https://github.com/jonbaize/BambuStudio/compare/bambulab:master...jonbaize:ux-dev)
+>
+> **Changes**
+> - **Expanded camera view.** On the Device page, the camera toolbar's full screen button now enlarges the camera feed inside the main window by hiding the Printing Progress, Control and Device side panels. Click it again to restore them. The View menu's full screen camera window is unchanged.
+> - **LAN camera option.** Setting `"prefer_lan_liveview": "true"` in the `app` section of `BambuStudio.conf` makes the camera use the printer's local stream (its IP and access code) before Bambu's cloud. Self-built copies aren't signed by Bambu Lab, so the cloud camera stream is refused with `[1:403]`; this option makes video work on the same network as the printer. Off by default.
+> - **macOS build fix.** `deps/CMakeLists.txt` now respects a deployment target passed in, so `./BuildMac.sh -t 11.0` works with Xcode versions whose libc++ rejects macOS 10.15.
+
 ![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
