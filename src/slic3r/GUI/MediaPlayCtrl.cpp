@@ -245,6 +245,10 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
         m_lan_mode       = obj->is_lan_mode_printer();
         m_lan_proto      = obj->liveview_local;
         m_remote_proto   = obj->get_liveview_remote();
+        m_prefer_lan     = wxGetApp().app_config->get_bool("prefer_lan_liveview");
+        // Printers that don't advertise a local protocol may still serve the port 6000 stream
+        if (m_prefer_lan && m_lan_proto == MachineObject::LVL_None)
+            m_lan_proto = MachineObject::LVL_Local;
         m_lan_ip         = obj->get_dev_ip();
         m_lan_passwd     = obj->get_access_code();
         m_device_busy    = obj->is_camera_busy_off();
@@ -254,6 +258,7 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
         m_camera_exists = false;
         m_support_liveview_preview = false;
         m_lan_mode = false;
+        m_prefer_lan = false;
         m_lan_proto = MachineObject::LVL_None;
         m_lan_ip.clear();
         m_lan_passwd.clear();
@@ -437,7 +442,7 @@ void MediaPlayCtrl::Play()
 
     NetworkAgent *agent = wxGetApp().getAgent();
     std::string  agent_version = agent ? agent->get_version() : "";
-    if (m_lan_proto > MachineObject::LVL_Disable && (m_lan_mode || !m_remote_proto) && !m_disable_lan && !m_lan_ip.empty()) {
+    if (m_lan_proto > MachineObject::LVL_Disable && (m_lan_mode || m_prefer_lan || !m_remote_proto) && !m_disable_lan && !m_lan_ip.empty()) {
         m_disable_lan = m_remote_proto && !m_lan_mode; // try remote next time
         std::string url;
         if (m_lan_proto == MachineObject::LVL_Local)
@@ -736,7 +741,7 @@ void MediaPlayCtrl::ToggleStream()
             wxGetApp().app_config->set("not_show_vcamera_stop_prev", "1");
         if (res == wxID_CANCEL) return;
     }
-    if (m_lan_proto > MachineObject::LVL_Disable && (m_lan_mode || !m_remote_proto) && !m_disable_lan && !m_lan_ip.empty()) {
+    if (m_lan_proto > MachineObject::LVL_Disable && (m_lan_mode || m_prefer_lan || !m_remote_proto) && !m_disable_lan && !m_lan_ip.empty()) {
         std::string url;
         if (m_lan_proto == MachineObject::LVL_Local)
             url = "bambu:///local/" + m_lan_ip + ".?port=6000&user=" + m_lan_user + "&passwd=" + m_lan_passwd;

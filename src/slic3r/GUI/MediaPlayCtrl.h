@@ -114,6 +114,7 @@ private:
     bool m_camera_exists = false;
     bool m_support_liveview_preview = false;
     bool m_lan_mode = false;
+    bool m_prefer_lan = false; // app_config "prefer_lan_liveview": try the LAN stream before the cloud one
     int m_remote_proto = 0;
     bool m_device_busy = false;
     bool m_disable_lan = false;
